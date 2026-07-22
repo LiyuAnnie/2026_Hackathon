@@ -28,81 +28,92 @@ st.set_page_config(
 # ----------------------------------------------------------------------------
 CUSTOM_CSS = """
 <style>
+    /* 多巴胺色系：明亮飽和但柔和的暖色背景，取代原本暗沉主題 */
     .main {
-        background-color: #0f1117;
+        background-color: #FFF8F1;
     }
     .stApp {
-        background: linear-gradient(180deg, #0b0e14 0%, #12151f 100%);
+        background: linear-gradient(160deg, #FFF6EE 0%, #FFF0F5 45%, #F0FBFF 100%);
     }
     h1, h2, h3 {
-        color: #f5f7fa;
-        font-weight: 700;
+        color: #2D2A4A;
+        font-weight: 800;
     }
     p, li, span, label {
-        color: #cbd3e1;
+        color: #4A4560;
     }
     .hero-card {
-        background: linear-gradient(135deg, #1b2130 0%, #232b3d 100%);
-        border-radius: 16px;
+        background: linear-gradient(135deg, #FFD6E8 0%, #FFE9C7 55%, #C8F4E9 100%);
+        border-radius: 18px;
         padding: 28px 32px;
-        border: 1px solid #2c3346;
+        border: 1px solid #FFD1E3;
         margin-bottom: 18px;
+        box-shadow: 0 6px 18px rgba(255, 141, 161, 0.18);
+    }
+    .hero-card h1 {
+        color: #7B2D6B;
     }
     .pain-card {
-        background: #171b26;
-        border-left: 4px solid #ef4444;
-        border-radius: 10px;
+        background: #FFFFFF;
+        border-left: 5px solid #FF6B6B;
+        border-radius: 12px;
         padding: 16px 20px;
         margin-bottom: 14px;
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.10);
     }
     .solution-card {
-        background: #171b26;
-        border-left: 4px solid #22c55e;
-        border-radius: 10px;
+        background: #FFFFFF;
+        border-left: 5px solid #06D6A0;
+        border-radius: 12px;
         padding: 16px 20px;
         margin-bottom: 14px;
+        box-shadow: 0 2px 8px rgba(6, 214, 160, 0.12);
     }
     .evidence-panel {
-        background: #171b26;
-        border: 1px solid #2c3346;
-        border-radius: 14px;
+        background: #FFFFFF;
+        border: 1px solid #FFE1EC;
+        border-radius: 16px;
         padding: 20px;
+        box-shadow: 0 2px 10px rgba(123, 97, 255, 0.08);
     }
     .law-tag {
         display: inline-block;
-        background: #1e293b;
-        color: #7dd3fc;
-        border: 1px solid #334155;
+        background: #EFEBFF;
+        color: #6D4CE0;
+        border: 1px solid #D8CCFF;
         border-radius: 999px;
         padding: 4px 12px;
         margin: 4px 6px 4px 0;
         font-size: 0.85rem;
+        font-weight: 600;
     }
     .status-chip-done {
-        background: #052e16;
-        color: #4ade80;
+        background: #DEFBEF;
+        color: #0B9D6F;
         border-radius: 999px;
         padding: 4px 12px;
         font-size: 0.85rem;
-        border: 1px solid #166534;
+        border: 1px solid #8CE9C9;
+        font-weight: 600;
     }
     .status-chip-pending {
-        background: #1e293b;
-        color: #facc15;
+        background: #FFF3D6;
+        color: #C98A00;
         border-radius: 999px;
         padding: 4px 12px;
         font-size: 0.85rem;
-        border: 1px solid #78716c;
+        border: 1px solid #FFD976;
+        font-weight: 600;
     }
     .hash-mono {
         font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
         font-size: 0.8rem;
-        color: #93c5fd;
+        color: #4C6FE0;
         word-break: break-all;
     }
     .timeline-item {
         padding: 10px 0 10px 20px;
-        border-left: 2px solid #334155;
+        border-left: 2px solid #FFD1E3;
         margin-left: 8px;
         position: relative;
     }
@@ -114,14 +125,37 @@ CUSTOM_CSS = """
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background: #22c55e;
+        background: #06D6A0;
     }
     .timeline-item.pending::before {
-        background: #facc15;
+        background: #FFC53D;
     }
     .stButton>button {
-        border-radius: 10px;
-        font-weight: 600;
+        border-radius: 12px;
+        font-weight: 700;
+        border: none;
+    }
+    .stButton>button[kind="primary"] {
+        background: linear-gradient(90deg, #FF6B9D 0%, #FF9F45 100%);
+        color: #fff;
+    }
+    /* 分頁標籤 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 6px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #FFFFFF;
+        border-radius: 10px 10px 0 0;
+        padding: 8px 18px;
+        color: #7B2D6B;
+        font-weight: 700;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(90deg, #FF6B9D 0%, #FFD23F 100%) !important;
+        color: #ffffff !important;
+    }
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #FFEFF6 0%, #F0FBFF 100%);
     }
 </style>
 """
@@ -227,10 +261,12 @@ with st.sidebar:
     st.markdown(
         """
         **平台流程**
-        1. 📌 專案緣起與痛點
-        2. 💬 AI 智慧蒐證對話
-        3. 🔗 區塊鏈證據鏈
-        4. 📄 調解申請與送件
+        1. 💬 AI 智慧蒐證對話
+        2. 🔗 區塊鏈證據鏈
+        3. 📄 調解申請與送件
+
+        > 📌 專案緣起、痛點分析與 Agent 治理設計，
+        > 請參閱專案 [README](https://github.com)。
         """
     )
     st.markdown("---")
@@ -239,9 +275,8 @@ with st.sidebar:
 # ----------------------------------------------------------------------------
 # 分頁
 # ----------------------------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs(
+tab1, tab2, tab3 = st.tabs(
     [
-        "📌 專案緣起與痛點",
         "💬 AI 智慧蒐證對話",
         "🔗 區塊鏈證據鏈",
         "📄 調解申請與送件",
@@ -249,101 +284,9 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 # ============================================================================
-# 分頁一：專案緣起與痛點
+# 分頁一：AI 智慧蒐證對話
 # ============================================================================
 with tab1:
-    st.markdown(
-        """
-        <div class="hero-card">
-        <h1>⚖️ 勞資爭議數位證據鏈 Agent</h1>
-        <p style="font-size:1.05rem;">
-        打造全天候陪伴勞工的 <b>Labor-Guard Agent</b>，結合 AI 蒐證解析與 Web3 不可竄改證明，
-        讓「口說無憑」的勞資爭議，變成「有憑有據」的正式申訴。
-        </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    col1, col2 = st.columns(2, gap="large")
-
-    with col1:
-        st.subheader("🩹 核心痛點與現行狀況")
-        st.markdown(
-            """
-            <div class="pain-card">
-            <b>舉證門檻高</b><br/>
-            勞資爭議（如加班費未給付、違法解雇）時，勞工常面臨「口說無憑」的困境，
-            且 LINE 對話紀錄、出勤截圖容易被資方質疑遭變造或刪除。
-            </div>
-            <div class="pain-card">
-            <b>法規資訊不對等</b><br/>
-            勞工往往不熟悉《勞動基準法》第 24 條（加班費）、第 38 條（特休）或
-            《勞動事件法》相關舉證規定，導致協商時居於劣勢。
-            </div>
-            <div class="pain-card">
-            <b>流程繁瑣</b><br/>
-            撰寫勞資爭議調解申請書對一般勞工門檻極高，不知如何精準對應法條。
-            </div>
-            <div class="pain-card">
-            <b>影響對象</b><br/>
-            廣大受薪階級、中小企業勞工、非典型勞動者。
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col2:
-        st.subheader("💡 AI Agent 解決方案")
-        st.markdown(
-            """
-            <div class="solution-card">
-            <b>自動化蒐證與解析</b><br/>
-            智慧解析勞工上傳的對話檔、班表，自動萃取關鍵時間、未給付薪資金額。
-            </div>
-            <div class="solution-card">
-            <b>法規對齊</b><br/>
-            自動匹配勞基法條，生成具有說服力的「事實與理由」。
-            </div>
-            <div class="solution-card">
-            <b>Web3 信任根基</b><br/>
-            將關鍵證據（檔案 SHA-256 雜湊）上鏈，確保資方無法否定其真實性，
-            提供法庭或勞工局調解時的強力數位證據。
-            </div>
-            <div class="solution-card">
-            <b>閉環服務</b><br/>
-            從對話蒐證 → 區塊鏈存證 → 自動生成調解申請書 → 模擬送件，一站式完成。
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("---")
-    st.subheader("🧭 系統架構總覽")
-    st.markdown(
-        """
-        ```
-        勞工輸入 (對話 / 截圖 / 班表)
-                │
-                ▼
-        💬 AI Agent：法規比對 + 事實萃取 + 金額試算
-                │
-                ▼
-        🔗 區塊鏈存證：SHA-256 雜湊 + 模擬上鏈 (TxHash)
-                │
-                ▼
-        📄 自動生成勞資爭議調解申請書 (含鏈上證據編號)
-                │
-                ▼
-        🏛️ 模擬送交地方勞工局線上申訴系統
-        ```
-        """
-    )
-
-# ============================================================================
-# 分頁二：AI 智慧蒐證對話
-# ============================================================================
-with tab2:
     st.subheader("💬 勞工智慧對話與蒐證")
     col_chat, col_panel = st.columns([1.2, 1], gap="large")
 
@@ -433,9 +376,9 @@ with tab2:
         st.metric("證據檔案數量", len(st.session_state.evidence_items))
 
 # ============================================================================
-# 分頁三：區塊鏈證據鏈
+# 分頁二：區塊鏈證據鏈
 # ============================================================================
-with tab3:
+with tab2:
     st.subheader("🔗 區塊鏈驗證與證據鏈")
     st.caption("展現 Web3 技術應用，確保數位證據的不可否認性 (Non-repudiation)。以下上鏈流程為模擬展示。")
 
@@ -509,9 +452,9 @@ with tab3:
         st.metric("待處理證據數", len(st.session_state.evidence_items) - anchored_count)
 
 # ============================================================================
-# 分頁四：調解申請與送件
+# 分頁三：調解申請與送件
 # ============================================================================
-with tab4:
+with tab3:
     st.subheader("📄 勞資調解申請書生成與送件")
 
     st.markdown("##### 📝 申請人 / 相對人基本資料")
