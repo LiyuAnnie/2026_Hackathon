@@ -356,18 +356,19 @@ def timeline_row(label, done, extra=""):
 # ============================================================================
 def render_login_page():
     render_logo_header()
-    st.markdown(
-        """
-        <div class="hero-card">
-        <h2>👋 歡迎使用 Labor-Guard Agent</h2>
-        <p>請先登入勞工帳號，開始您的智慧蒐證與調解申請流程。</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
-    col1, col2 = st.columns([1, 1.4])
-    with col1:
+    col_l, col_mid, col_r = st.columns([1, 1.2, 1])
+    with col_mid:
+        st.markdown(
+            """
+            <div class="hero-card">
+            <h2>👋 歡迎使用 Labor-Guard Agent</h2>
+            <p>請先登入勞工帳號，開始您的智慧蒐證與調解申請流程。</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         st.subheader("🔐 勞工帳號登入")
         with st.form("login_form"):
             username = st.text_input("帳號", placeholder="例如：labor01")
@@ -389,10 +390,6 @@ def render_login_page():
             "帳號：`labor01` ／ 密碼：`test1234`\n\n"
             "帳號：`demo` ／ 密碼：`demo1234`"
         )
-
-    with col2:
-        st.subheader("📖 Demo 劇情（5 分鐘導覽）")
-        render_demo_story(compact=True)
 
 
 # ============================================================================
@@ -439,7 +436,7 @@ def render_demo_story(compact: bool = False):
         st.subheader("💡 操作小提醒")
         st.markdown(
             """
-            - 建議依照 Demo 劇情順序操作：**對話 → 上傳證據 → 上鏈存證 → 產出申請書 → 確認送出 → 查看進度**。
+            - 建議依照以下順序操作：**對話 → 上傳證據 → 上鏈存證 → 產出申請書 → 確認送出 → 查看進度**。
             - 「上鏈」與「送出至勞工局」流程皆為**模擬展示**，不會真的寫入公開區塊鏈或送出至政府系統。
             - 若要重新示範，重新整理頁面或登出後再登入，即可清空本次示範資料（僅限單次瀏覽器工作階段）。
             """
@@ -449,7 +446,7 @@ def render_demo_story(compact: bool = False):
 def page_instructions():
     render_logo_header()
     st.subheader("📖 平台使用說明")
-    st.caption("依照以下 Demo 劇情操作，5 分鐘體驗完整的智慧蒐證、區塊鏈存證與調解申請流程。")
+    st.caption("依照以下步驟操作，5 分鐘體驗完整的智慧蒐證、區塊鏈存證與調解申請流程。")
     render_demo_story(compact=False)
 
 
