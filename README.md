@@ -1,5 +1,7 @@
 # ⚖️ 勞資爭議數位證據鏈 Agent（Labor-Guard Agent）
 
+Demo 連結：https://2026hackathon-cclusd9kbnmuvqscfwqpsd.streamlit.app/
+
 黑客松模擬互動平台 — 使用 **Python + Streamlit** 打造，展示 AI Agent 蒐證解析 + Web3 區塊鏈存證 + 自動化調解申請書生成的完整概念驗證 (PoC)。
 
 > ⚠️ 本專案為黑客松展示用途，區塊鏈上鏈與勞工局送件流程皆為**模擬**，非真實鏈上交易，生成之申請書亦非正式法律文件。
