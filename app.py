@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------------
-# 自訂樣式 (現代化 UI)
+# 自訂樣式 (現代化 UI・多巴胺色系)
 # ----------------------------------------------------------------------------
 CUSTOM_CSS = """
 <style>
@@ -41,6 +41,28 @@ CUSTOM_CSS = """
     }
     p, li, span, label {
         color: #4A4560;
+    }
+    .app-logo-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 4px 18px 4px;
+        margin-bottom: 6px;
+        border-bottom: 2px solid #FFD6E8;
+    }
+    .app-logo-bar .logo-emoji {
+        font-size: 2.1rem;
+    }
+    .app-logo-bar .logo-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #7B2D6B;
+        margin: 0;
+    }
+    .app-logo-bar .logo-sub {
+        font-size: 0.85rem;
+        color: #9A6FA0;
+        margin: 0;
     }
     .hero-card {
         background: linear-gradient(135deg, #FFD6E8 0%, #FFE9C7 55%, #C8F4E9 100%);
@@ -68,6 +90,27 @@ CUSTOM_CSS = """
         padding: 16px 20px;
         margin-bottom: 14px;
         box-shadow: 0 2px 8px rgba(6, 214, 160, 0.12);
+    }
+    .step-card {
+        background: #FFFFFF;
+        border-left: 5px solid #7B61FF;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(123, 97, 255, 0.10);
+    }
+    .step-card .step-num {
+        display: inline-block;
+        background: linear-gradient(90deg, #FF6B9D 0%, #FFD23F 100%);
+        color: #fff;
+        font-weight: 800;
+        border-radius: 999px;
+        width: 26px;
+        height: 26px;
+        text-align: center;
+        line-height: 26px;
+        margin-right: 10px;
+        font-size: 0.85rem;
     }
     .evidence-panel {
         background: #FFFFFF;
@@ -130,6 +173,16 @@ CUSTOM_CSS = """
     .timeline-item.pending::before {
         background: #FFC53D;
     }
+    .case-id-badge {
+        display: inline-block;
+        background: linear-gradient(90deg, #7B61FF 0%, #4CC9F0 100%);
+        color: #fff;
+        font-weight: 700;
+        border-radius: 10px;
+        padding: 6px 16px;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
     .stButton>button {
         border-radius: 12px;
         font-weight: 700;
@@ -139,31 +192,61 @@ CUSTOM_CSS = """
         background: linear-gradient(90deg, #FF6B9D 0%, #FF9F45 100%);
         color: #fff;
     }
-    /* 分頁標籤 */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 6px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #FFFFFF;
-        border-radius: 10px 10px 0 0;
-        padding: 8px 18px;
-        color: #7B2D6B;
-        font-weight: 700;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(90deg, #FF6B9D 0%, #FFD23F 100%) !important;
-        color: #ffffff !important;
-    }
+    /* 側邊欄導覽按鈕 */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #FFEFF6 0%, #F0FBFF 100%);
+    }
+    section[data-testid="stSidebar"] .stRadio > label {
+        font-weight: 700;
+        color: #7B2D6B;
+    }
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {
+        background: #FFFFFF;
+        border-radius: 10px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        border: 1px solid #FFE1EC;
     }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+
+def render_logo_header():
+    st.markdown(
+        """
+        <div class="app-logo-bar">
+            <div class="logo-emoji">⚖️</div>
+            <div>
+                <p class="logo-title">Labor-Guard Agent</p>
+                <p class="logo-sub">勞資爭議數位證據鏈 Agent · 黑客松模擬展示平台</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ----------------------------------------------------------------------------
+# 內建測試帳號
+# ----------------------------------------------------------------------------
+DEMO_ACCOUNTS = {
+    "labor01": "test1234",
+    "demo": "demo1234",
+}
+
 # ----------------------------------------------------------------------------
 # Session State 初始化
 # ----------------------------------------------------------------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if "username" not in st.session_state:
+    st.session_state.username = None
+
+if "case_id" not in st.session_state:
+    st.session_state.case_id = None
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
         {
@@ -192,6 +275,9 @@ if "applicant_info" not in st.session_state:
 if "submitted" not in st.session_state:
     st.session_state.submitted = False
 
+if "submitted_time" not in st.session_state:
+    st.session_state.submitted_time = None
+
 
 # ----------------------------------------------------------------------------
 # 工具函式
@@ -204,12 +290,17 @@ def fake_tx_hash() -> str:
     return "0x" + "".join(random.choices("0123456789abcdef", k=64))
 
 
+def gen_case_id(username: str) -> str:
+    seed = f"{username}-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(0, 9999)}"
+    digest = hashlib.sha1(seed.encode()).hexdigest()[:6].upper()
+    return f"LDC-{datetime.now().year}-{digest}"
+
+
 def extract_case_facts(user_text: str):
     """
     簡易關鍵字比對，模擬 Agent 從對話中萃取違法事實與法規。
     這裡以規則式模擬取代真正 NLP / LLM 呼叫，方便黑客松展示不需外部 API。
     """
-    text = user_text.lower()
     facts = {
         "violation": [],
         "laws": [],
@@ -227,7 +318,7 @@ def extract_case_facts(user_text: str):
         facts["overtime_hours"] = hours
         facts["estimated_amount"] += amount
 
-    if any(k in user_text for k in ["解雇", "資遣", "開除", "фired", "fired"]):
+    if any(k in user_text for k in ["解雇", "資遣", "開除", "fired"]):
         facts["violation"].append("疑似違法終止勞動契約（未依勞基法第 11 / 12 條事由，或未給付資遣費）")
         facts["laws"].append("勞動基準法 第 11 條 / 第 12 條（終止契約事由）")
         facts["laws"].append("勞動基準法 第 17 條（資遣費計算）")
@@ -251,42 +342,122 @@ def render_status_chip(done: bool):
     return '<span class="status-chip-pending">⏳ 進行中</span>'
 
 
-# ----------------------------------------------------------------------------
-# Sidebar
-# ----------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("## ⚖️ Labor-Guard Agent")
-    st.caption("勞資爭議數位證據鏈 Agent · 黑客松模擬展示")
-    st.markdown("---")
+def timeline_row(label, done, extra=""):
+    cls = "timeline-item" if done else "timeline-item pending"
+    icon = "✅" if done else "⏳"
+    st.markdown(
+        f'<div class="{cls}"><b>{icon} {label}</b><br/><span style="color:#8b8698;">{extra}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================================
+# 登入頁面
+# ============================================================================
+def render_login_page():
+    render_logo_header()
     st.markdown(
         """
-        **平台流程**
-        1. 💬 AI 智慧蒐證對話
-        2. 🔗 區塊鏈證據鏈
-        3. 📄 調解申請與送件
-
-        > 📌 專案緣起、痛點分析與 Agent 治理設計，
-        > 請參閱專案 [README](https://github.com)。
-        """
+        <div class="hero-card">
+        <h2>👋 歡迎使用 Labor-Guard Agent</h2>
+        <p>請先登入勞工帳號，開始您的智慧蒐證與調解申請流程。</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown("---")
-    st.info("本平台為概念驗證 (PoC) / 黑客松模擬展示，區塊鏈上鏈與送件流程皆為模擬，非正式法律文件或真實鏈上交易。")
 
-# ----------------------------------------------------------------------------
-# 分頁
-# ----------------------------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(
-    [
-        "💬 AI 智慧蒐證對話",
-        "🔗 區塊鏈證據鏈",
-        "📄 調解申請與送件",
+    col1, col2 = st.columns([1, 1.4])
+    with col1:
+        st.subheader("🔐 勞工帳號登入")
+        with st.form("login_form"):
+            username = st.text_input("帳號", placeholder="例如：labor01")
+            password = st.text_input("密碼", type="password", placeholder="請輸入密碼")
+            submitted = st.form_submit_button("登入", type="primary", use_container_width=True)
+
+        if submitted:
+            if username in DEMO_ACCOUNTS and DEMO_ACCOUNTS[username] == password:
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.session_state.case_id = gen_case_id(username)
+                st.success("登入成功，正在進入平台...")
+                st.rerun()
+            else:
+                st.error("帳號或密碼錯誤，請再試一次。")
+
+        st.info(
+            "🧪 **測試用內建帳號**\n\n"
+            "帳號：`labor01` ／ 密碼：`test1234`\n\n"
+            "帳號：`demo` ／ 密碼：`demo1234`"
+        )
+
+    with col2:
+        st.subheader("📖 Demo 劇情（5 分鐘導覽）")
+        render_demo_story(compact=True)
+
+
+# ============================================================================
+# 使用說明 / Demo 劇情頁
+# ============================================================================
+def render_demo_story(compact: bool = False):
+    steps = [
+        ("勞工登入平台", "使用內建測試帳號（labor01 / test1234）登入 Labor-Guard Agent。"),
+        ("與 Agent 對話描述狀況", "在「💬 AI 智慧蒐證對話」分頁輸入：「公司未支付加班費」，Agent 會開始引導蒐證。"),
+        ("上傳關鍵證據", "上傳 LINE 對話截圖、薪資單、打卡紀錄等檔案，系統會自動計算每份檔案的 SHA-256 指紋。"),
+        ("Agent 自動整理並比對法規", "Agent 解析上傳內容，辨識缺漏資料，並自動比對《勞動基準法》第 24 條等相關條文，估算應補發金額。"),
+        ("產生調解申請書草稿", "切換到「📄 調解申請與送件」分頁，系統依蒐證結果自動產出結構化申請書草稿。"),
+        ("使用者確認並授權送件", "勞工本人檢視草稿內容無誤後，按下「確認送出」按鈕，完成 Human Approval 人工確認機制。"),
+        ("證據與操作紀錄上鏈", "前往「🔗 區塊鏈證據鏈」分頁，一鍵將證據雜湊與送件操作紀錄寫入區塊鏈，系統顯示交易雜湊（TxHash）並驗證成功。"),
+        ("查看案件進度", "在「📊 我的案件」分頁，隨時查看目前送件與處理進度，追蹤四大階段是否完成。"),
     ]
-)
+
+    for i, (title, desc) in enumerate(steps, start=1):
+        st.markdown(
+            f"""
+            <div class="step-card">
+            <span class="step-num">{i}</span><b>{title}</b>
+            <div style="margin-top:6px; margin-left:36px; color:#5c5770;">{desc}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if not compact:
+        st.markdown("---")
+        st.subheader("🗂️ 分頁功能對照")
+        st.markdown(
+            """
+            | 分頁 | 對應 Demo 步驟 | 功能重點 |
+            |---|---|---|
+            | 💬 AI 智慧蒐證對話 | 步驟 2 - 3 | 與 Agent 對話描述問題、上傳證據檔案、即時法規比對與金額試算 |
+            | 🔗 區塊鏈證據鏈 | 步驟 7 | 證據雜湊上鏈、TxHash 顯示、竄改驗證工具 |
+            | 📄 調解申請與送件 | 步驟 5 - 6 | 自動生成申請書草稿、人工確認並授權送出 |
+            | 📊 我的案件 | 步驟 8 | 案件編號、四大階段進度追蹤、送件狀態總覽 |
+            """
+        )
+
+        st.markdown("---")
+        st.subheader("💡 操作小提醒")
+        st.markdown(
+            """
+            - 建議依照 Demo 劇情順序操作：**對話 → 上傳證據 → 上鏈存證 → 產出申請書 → 確認送出 → 查看進度**。
+            - 「上鏈」與「送出至勞工局」流程皆為**模擬展示**，不會真的寫入公開區塊鏈或送出至政府系統。
+            - 若要重新示範，重新整理頁面或登出後再登入，即可清空本次示範資料（僅限單次瀏覽器工作階段）。
+            """
+        )
+
+
+def page_instructions():
+    render_logo_header()
+    st.subheader("📖 平台使用說明")
+    st.caption("依照以下 Demo 劇情操作，5 分鐘體驗完整的智慧蒐證、區塊鏈存證與調解申請流程。")
+    render_demo_story(compact=False)
+
 
 # ============================================================================
-# 分頁一：AI 智慧蒐證對話
+# 分頁：AI 智慧蒐證對話
 # ============================================================================
-with tab1:
+def page_chat():
+    render_logo_header()
     st.subheader("💬 勞工智慧對話與蒐證")
     col_chat, col_panel = st.columns([1.2, 1], gap="large")
 
@@ -321,7 +492,7 @@ with tab1:
             )
             st.rerun()
 
-        st.markdown("##### 📎 上傳蒐證檔案（對話截圖 / 出勤紀錄）")
+        st.markdown("##### 📎 上傳蒐證檔案（對話截圖 / 薪資單 / 打卡紀錄）")
         uploaded_files = st.file_uploader(
             "支援圖片、PDF、文字檔等格式",
             type=["png", "jpg", "jpeg", "pdf", "txt", "csv"],
@@ -375,10 +546,12 @@ with tab1:
         st.markdown("##### 📂 已上傳證據數")
         st.metric("證據檔案數量", len(st.session_state.evidence_items))
 
+
 # ============================================================================
-# 分頁二：區塊鏈證據鏈
+# 分頁：區塊鏈證據鏈
 # ============================================================================
-with tab2:
+def page_blockchain():
+    render_logo_header()
     st.subheader("🔗 區塊鏈驗證與證據鏈")
     st.caption("展現 Web3 技術應用，確保數位證據的不可否認性 (Non-repudiation)。以下上鏈流程為模擬展示。")
 
@@ -451,10 +624,12 @@ with tab2:
         st.metric("已上鏈證據數", anchored_count)
         st.metric("待處理證據數", len(st.session_state.evidence_items) - anchored_count)
 
+
 # ============================================================================
-# 分頁三：調解申請與送件
+# 分頁：調解申請與送件
 # ============================================================================
-with tab3:
+def page_application():
+    render_logo_header()
     st.subheader("📄 勞資調解申請書生成與送件")
 
     st.markdown("##### 📝 申請人 / 相對人基本資料")
@@ -578,41 +753,134 @@ with tab3:
                 mime="text/plain",
             )
         with col_submit:
-            if st.button("📮 一鍵送出至地方勞工局線上申訴系統（模擬）", type="primary"):
+            st.caption("按下送出前請確認以上內容無誤（Human Approval 人工確認機制）")
+            if st.button("✅ 確認內容並授權送出至地方勞工局線上申訴系統（模擬）", type="primary"):
                 with st.spinner("正在模擬送出申請..."):
                     time.sleep(1.5)
                 st.session_state.submitted = True
-                st.success("✅ 已模擬送出！申請書已進入下方進度追蹤。")
+                st.session_state.submitted_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.success("✅ 已模擬送出！請至「📊 我的案件」分頁查看最新進度。")
+
+
+# ============================================================================
+# 分頁：我的案件（進度追蹤）
+# ============================================================================
+def page_my_cases():
+    render_logo_header()
+    st.subheader("📊 我的案件")
+
+    facts = st.session_state.case_facts
+    evidence_items = st.session_state.evidence_items
+    anchored_items = [i for i in evidence_items if i["anchored"]]
+    applicant = st.session_state.applicant_info
+
+    col_id, col_status = st.columns([1, 1.4])
+    with col_id:
+        st.markdown(f'<span class="case-id-badge">案件編號：{st.session_state.case_id}</span>', unsafe_allow_html=True)
+        st.caption(f"登入帳號：{st.session_state.username}")
+    with col_status:
+        if st.session_state.submitted:
+            st.success(f"目前狀態：已送出，等待勞工局受理中（送出時間：{st.session_state.submitted_time}）")
+        elif facts:
+            st.info("目前狀態：蒐證與草擬進行中，尚未送出申請")
+        else:
+            st.warning("目前狀態：尚未開始，請至「AI 智慧蒐證對話」分頁與 Agent 對話")
+
+    st.markdown("---")
+
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+    col_m1.metric("已上傳證據", len(evidence_items))
+    col_m2.metric("已上鏈證據", len(anchored_items))
+    col_m3.metric(
+        "估算應補發金額 (TWD)",
+        f"$ {facts['estimated_amount']:,}" if facts and facts.get("estimated_amount") else "—",
+    )
+    col_m4.metric("送件狀態", "已送出" if st.session_state.submitted else "未送出")
+
+    st.markdown("---")
+    st.markdown("##### 📊 案件進度追蹤 (Timeline Tracker)")
+
+    step1_done = facts is not None
+    step2_done = len(anchored_items) > 0
+    step3_done = bool(applicant["name"]) and step1_done
+    step4_done = st.session_state.submitted
+
+    timeline_row(
+        "Step 1：智慧蒐證與法規對齊",
+        step1_done,
+        "已與 Agent 完成對話並萃取法規依據" if step1_done else "請至「AI 智慧蒐證對話」分頁開始",
+    )
+    timeline_row(
+        "Step 2：數位證據區塊鏈存證",
+        step2_done,
+        f"已上鏈 {len(anchored_items)} / {len(evidence_items)} 份證據"
+        + (f"，最新 TxHash: {anchored_items[-1]['tx_hash']}" if anchored_items else ""),
+    )
+    timeline_row(
+        "Step 3：調解申請書產出",
+        step3_done,
+        "已填寫申請人資料並產出草稿" if step3_done else "請至「調解申請與送件」分頁填寫資料",
+    )
+    timeline_row(
+        "Step 4：已送交主管機關 / 等待勞工局受理",
+        step4_done,
+        f"已於 {st.session_state.submitted_time} 模擬送出，等待受理中" if step4_done else "尚未送出",
+    )
+
+    st.markdown("---")
+    if evidence_items:
+        st.markdown("##### 📂 證據總覽")
+        for idx, item in enumerate(evidence_items):
+            status = "🟢 已上鏈" if item["anchored"] else "⏳ 尚未上鏈"
+            st.markdown(f"- **{item['name']}** · {item['size']:,} bytes · {status}")
+    else:
+        st.caption("尚無已上傳的證據檔案。")
+
+
+# ============================================================================
+# 主程式路由
+# ============================================================================
+if not st.session_state.authenticated:
+    render_login_page()
+else:
+    with st.sidebar:
+        st.markdown("## ⚖️ Labor-Guard Agent")
+        st.caption("勞資爭議數位證據鏈 Agent · 黑客松模擬展示")
+        st.markdown(f"👤 歡迎，**{st.session_state.username}**")
+        st.markdown(f'<span class="case-id-badge">{st.session_state.case_id}</span>', unsafe_allow_html=True)
+        st.markdown("---")
+
+        page = st.radio(
+            "平台導覽",
+            [
+                "📖 使用說明",
+                "💬 AI 智慧蒐證對話",
+                "🔗 區塊鏈證據鏈",
+                "📄 調解申請與送件",
+                "📊 我的案件",
+            ],
+            label_visibility="collapsed",
+        )
 
         st.markdown("---")
-        st.markdown("##### 📊 進度追蹤 (Timeline Tracker)")
+        st.info("本平台為概念驗證 (PoC) / 黑客松模擬展示，登入、區塊鏈上鏈與送件流程皆為模擬，非正式法律文件或真實鏈上交易。")
 
-        step1_done = facts is not None
-        step2_done = len(anchored_items) > 0
-        step3_done = bool(applicant["name"]) and step1_done
-        step4_done = st.session_state.submitted
+        st.markdown("---")
+        if st.button("🚪 登出", use_container_width=True):
+            for key in ["authenticated", "username", "case_id"]:
+                st.session_state[key] = False if key == "authenticated" else None
+            st.rerun()
 
-        def timeline_row(label, done, extra=""):
-            cls = "timeline-item" if done else "timeline-item pending"
-            icon = "✅" if done else "⏳"
-            st.markdown(
-                f'<div class="{cls}"><b>{icon} {label}</b><br/><span style="color:#94a3b8;">{extra}</span></div>',
-                unsafe_allow_html=True,
-            )
+    if page == "📖 使用說明":
+        page_instructions()
+    elif page == "💬 AI 智慧蒐證對話":
+        page_chat()
+    elif page == "🔗 區塊鏈證據鏈":
+        page_blockchain()
+    elif page == "📄 調解申請與送件":
+        page_application()
+    elif page == "📊 我的案件":
+        page_my_cases()
 
-        timeline_row("Step 1：智慧蒐證與法規對齊", step1_done)
-        timeline_row(
-            "Step 2：數位證據區塊鏈存證",
-            step2_done,
-            f"已上鏈 {len(anchored_items)} / {len(evidence_items)} 份證據"
-            + (f"，最新 TxHash: {anchored_items[-1]['tx_hash']}" if anchored_items else ""),
-        )
-        timeline_row("Step 3：調解申請書產出", step3_done)
-        timeline_row(
-            "Step 4：已送交主管機關 / 等待勞工局受理",
-            step4_done,
-            "已模擬送出，等待受理中" if step4_done else "尚未送出",
-        )
-
-st.markdown("---")
-st.caption("⚖️ Labor-Guard Agent · 勞資爭議數位證據鏈 Agent · 黑客松模擬展示專案（Proof of Concept）")
+    st.markdown("---")
+    st.caption("⚖️ Labor-Guard Agent · 勞資爭議數位證據鏈 Agent · 黑客松模擬展示專案（Proof of Concept）")
