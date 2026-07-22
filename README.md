@@ -67,7 +67,7 @@
 
 ### 📊 治理設計對照總覽表
 
-| 信任維度 | 傳統 AI 痛點 | Labor-Guard 治理對策 | 評審驗證點（Demo 呈現） |
+| 信任維度 | 傳統 AI 痛點 | Labor-Guard 治理對策 | Demo 呈現 |
 |---|---|---|---|
 | 誰授權（Who） | 誰發起指令模糊不清 | 綁定實名數位帳號與明確授權同意 | 登入頁面與授權勾選狀態 |
 | 允許做什麼（What） | Agent 擁有過大自主權 | 權限分級：僅能蒐集與草擬，高風險動作需人工確認 | 申請書送出前的「二次確認機制」 |
@@ -98,12 +98,6 @@ streamlit run app.py
 
 啟動後瀏覽器會自動開啟 `http://localhost:8501`。
 
-## ☁️ 部署到 Streamlit Community Cloud
-
-1. 將本專案上傳至 GitHub repository（含 `app.py`、`requirements.txt`）。
-2. 前往 [share.streamlit.io](https://share.streamlit.io)，使用 GitHub 帳號登入。
-3. 點選 **New app**，選擇你的 repository、分支，Main file path 填 `app.py`。
-4. 點選 **Deploy**，即可取得公開網址分享給評審。
 
 ## 📁 專案結構
 
